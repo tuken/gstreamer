@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/homebrew/Cellar/gstreamer/1.26.5_5/include/gstreamer-1.0",
+                "/opt/homebrew/Cellar/glib/2.86.0/include",
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/ffi",
+                "/opt/homebrew/Cellar/glib/2.86.0/include/glib-2.0",
+                "/opt/homebrew/Cellar/glib/2.86.0/lib/glib-2.0/include",
+                "/opt/homebrew/opt/gettext/include",
+                "/opt/homebrew/Cellar/pcre2/10.46/include"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
