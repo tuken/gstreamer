@@ -5,6 +5,66 @@ G_DEFINE_TYPE(SclMediaFactory, scl_media_factory, GST_TYPE_RTSP_MEDIA_FACTORY)
 
 GST_DEBUG_CATEGORY_STATIC(scl_media_factory);
 
+static void on_new_stream(GstRTSPMedia *media, GstRTSPStream *stream, gpointer user_data) { GST_FIXME("new-stream!!!"); }
+
+static void on_prepared(GstRTSPMedia *media, gpointer user_data) {
+    GST_FIXME("prepared!!!");
+
+    guint count = gst_rtsp_media_n_streams(media);
+    // GST_FIXME("stream count: %u", count);
+    for (guint i = 0; i < count; i++) {
+        GstRTSPStream *stream = gst_rtsp_media_get_stream(media, i);
+        // GST_FIXME("stream pointer: %p", stream);
+        GstCaps *caps = gst_rtsp_stream_get_caps(stream);
+        // GST_FIXME("caps pointer: %p", caps);
+
+        if (caps) {
+            const gchar *media_type = gst_structure_get_name(gst_caps_get_structure(caps, 0));
+            GST_FIXME("Stream %u: %s", i, media_type);
+            g_print("Stream %u: %s\n", i, media_type);
+            gst_caps_unref(caps);
+        }
+    }
+
+    GstElement *pipeline = gst_rtsp_media_get_element(media);
+
+    GstElement *depay0 = gst_bin_get_by_name(GST_BIN(pipeline), "depay0");
+    GST_FIXME("depay0 pointer: %p", depay0);
+    GstElement *parse0 = gst_bin_get_by_name(GST_BIN(pipeline), "parse0");
+    GST_FIXME("parse0 pointer: %p", parse0);
+    GstElement *queue0 = gst_bin_get_by_name(GST_BIN(pipeline), "queue0");
+    GST_FIXME("queue0 pointer: %p", queue0);
+    GstElement *sink = gst_bin_get_by_name(GST_BIN(pipeline), "sink0");
+    GST_FIXME("sink0 pointer: %p", sink);
+
+    if (depay0 && parse0 && sink) {
+        GstPad *depay0_src_pad = gst_element_get_static_pad(depay0, "src");
+        GstPad *parse0_sink_pad = gst_element_get_static_pad(parse0, "sink");
+        GstPad *parse0_src_pad = gst_element_get_static_pad(parse0, "src");
+        GstPad *queue0_sink_pad = gst_element_get_static_pad(queue0, "sink");
+        GstPad *queue0_src_pad = gst_element_get_static_pad(queue0, "src");
+        GstPad *sink_video_pad = gst_element_request_pad_simple(sink, "video");
+
+        GstPadLinkReturn ret01 = gst_pad_link(depay0_src_pad, parse0_sink_pad);
+        GST_FIXME("depay0とparse0のリンク = %d", ret01);
+        GstPadLinkReturn ret02 = gst_pad_link(parse0_src_pad, queue0_sink_pad);
+        GST_FIXME("parse0とqueue0のリンク = %d", ret02);
+        GstPadLinkReturn ret03 = gst_pad_link(queue0_src_pad, sink_video_pad);
+        GST_FIXME("queue0とsinkのリンク = %d", ret03);
+
+        gst_object_unref(sink_video_pad);
+        gst_object_unref(queue0_src_pad);
+        gst_object_unref(queue0_sink_pad);
+        gst_object_unref(parse0_src_pad);
+        gst_object_unref(parse0_sink_pad);
+        gst_object_unref(depay0_src_pad);
+    }
+
+    gst_object_unref(pipeline);
+}
+
+static void on_removed_stream(GstRTSPMedia *media, GstRTSPStream *stream, gpointer user_data) { GST_FIXME("removed-stream!!!"); }
+
 static gchararray on_format_location_full(GstElement *splitmux, gint fragment_id, GstSample *first_sample, gpointer user_data) {
     // g_print("format-location-full signal received! fragment_id=%d\n", fragment_id);
 
@@ -21,9 +81,6 @@ static gchararray on_format_location_full(GstElement *splitmux, gint fragment_id
 
     return g_strdup_printf("segment-%03d.mp4", fragment_id);
 }
-static void on_new_stream(GstRTSPMedia *media, GstRTSPStream *object, gpointer user_data) { GST_FIXME("new-stream!!!"); }
-
-static void on_removed_stream(GstRTSPMedia *media, GstRTSPStream *object, gpointer user_data) { GST_FIXME("removed-stream!!!"); }
 
 // configure仮想関数のオーバーライド
 static GstRTSPMedia *scl_media_factory_construct(GstRTSPMediaFactory *factory, const GstRTSPUrl *url) {
@@ -63,7 +120,9 @@ static GstElement *scl_media_factory_create_element(GstRTSPMediaFactory *factory
     g_object_set(sink, "async-finalize", TRUE, NULL);
     g_object_set(sink, "use-robust-muxing", TRUE, NULL);
 
-    gst_bin_add_many(GST_BIN(pipeline), depay0, parse0, queue0, depay1, parse1, queue1, sink, NULL);
+    gst_bin_add_many(GST_BIN(pipeline), depay0, parse0, queue0, NULL);
+    gst_bin_add_many(GST_BIN(pipeline), depay1, parse1, queue1, NULL);
+    gst_bin_add_many(GST_BIN(pipeline), sink, NULL);
 
     // 自動では繋がらないっぽいので、手動で繋ぐ
     // gboolean is_video_linked = gst_element_link_many(depay0, parse0, queue0, sink, NULL);
@@ -80,11 +139,11 @@ static GstElement *scl_media_factory_create_element(GstRTSPMediaFactory *factory
     GstPad *sink_video_pad = gst_element_request_pad_simple(sink, "video");
 
     GstPadLinkReturn ret01 = gst_pad_link(depay0_src_pad, parse0_sink_pad);
-    GST_FIXME("depay0とparse0のリンク = %d", ret01);
+    GST_CAT_FIXME(scl_media_factory, "depay0とparse0のリンク = %d", ret01);
     GstPadLinkReturn ret02 = gst_pad_link(parse0_src_pad, queue0_sink_pad);
-    GST_FIXME("parse0とqueue0のリンク = %d", ret02);
+    GST_CAT_FIXME(scl_media_factory, "parse0とqueue0のリンク = %d", ret02);
     GstPadLinkReturn ret03 = gst_pad_link(queue0_src_pad, sink_video_pad);
-    GST_FIXME("queue0とsinkのリンク = %d", ret03);
+    GST_CAT_FIXME(scl_media_factory, "queue0とsinkのリンク = %d", ret03);
 
     gst_object_unref(sink_video_pad);
     gst_object_unref(queue0_src_pad);
@@ -101,11 +160,11 @@ static GstElement *scl_media_factory_create_element(GstRTSPMediaFactory *factory
     GstPad *sink_audio_pad = gst_element_request_pad_simple(sink, "audio_0");
 
     GstPadLinkReturn ret11 = gst_pad_link(depay1_src_pad, parse1_sink_pad);
-    GST_FIXME("depay1とparse1のリンク = %d", ret11);
+    GST_CAT_FIXME(scl_media_factory, "depay1とparse1のリンク = %d", ret11);
     GstPadLinkReturn ret12 = gst_pad_link(parse1_src_pad, queue1_sink_pad);
-    GST_FIXME("parse1とqueue1のリンク = %d", ret12);
+    GST_CAT_FIXME(scl_media_factory, "parse1とqueue1のリンク = %d", ret12);
     GstPadLinkReturn ret13 = gst_pad_link(queue1_src_pad, sink_audio_pad);
-    GST_FIXME("queue1とsinkのリンク = %d", ret13);
+    GST_CAT_FIXME(scl_media_factory, "queue1とsinkのリンク = %d", ret13);
 
     gst_object_unref(sink_audio_pad);
     gst_object_unref(queue1_src_pad);
@@ -135,6 +194,8 @@ static void scl_media_factory_configure(GstRTSPMediaFactory *factory, GstRTSPMed
     GST_CAT_FIXME(scl_media_factory, "configure!!!");
 
     g_signal_connect(media, "new-stream", G_CALLBACK(on_new_stream), NULL);
+    // g_signal_connect(media, "prepared", G_CALLBACK(on_prepared), NULL);
+    // g_signal_connect(media, "unprepared", G_CALLBACK(on_unprepared), NULL);
     g_signal_connect(media, "removed-stream", G_CALLBACK(on_removed_stream), NULL);
 
     GstElement *pipeline = gst_rtsp_media_get_element(media);
@@ -159,6 +220,8 @@ static void scl_media_factory_class_init(SclMediaFactoryClass *klass) {
     factory_class->create_element = scl_media_factory_create_element;
     factory_class->create_pipeline = scl_media_factory_create_pipeline;
     factory_class->configure = scl_media_factory_configure;
+
+    signals[SIGNAL_SDP_MISMATCH] = g_signal_new(SCL_MEDIA_FACTORY_SIGNAL_SDP_MISMATCH, G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
 
     GST_DEBUG_CATEGORY_INIT(scl_media_factory, "sclmediafactory", 0, "SclMediaFactory");
 }

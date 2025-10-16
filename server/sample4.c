@@ -1,18 +1,29 @@
 #include "scl-media-factory.h"
 
 // static gboolean bus_call(GstBus *bus, GstMessage *msg, gpointer data) {
+//     GMainLoop *loop = (GMainLoop *)data;
+
 //     switch (GST_MESSAGE_TYPE(msg)) {
 //         case GST_MESSAGE_EOS:
-//             g_print("EOS received!\n");
-//             if (data)
-//                 g_main_loop_quit((GMainLoop *)data);
+//             GST_FIXME("EOS received!\n");
+//             g_main_loop_quit(loop);
 //             break;
 
-//         case GST_MESSAGE_ERROR:
-//             g_print("Error occurred!!!!\n");
-//             if (data)
-//                 g_main_loop_quit((GMainLoop *)data);
+//         case GST_MESSAGE_ERROR: {
+//             GError *err = NULL;
+//             gchar *debug = NULL;
+//             gst_message_parse_error(msg, &err, &debug);
+//             GST_FIXME("Error: %s\n", err->message);
+//             if (debug)
+//                 GST_FIXME("Debug: %s\n", debug);
+//             if (err && strstr(err->message, "Media has more or less streams than SDP")) {
+//                 GST_FIXME("Detected SDP/stream mismatch. Restarting RTSP server...\n");
+//                 g_main_loop_quit(loop);
+//             }
+//             g_error_free(err);
+//             g_free(debug);
 //             break;
+//         }
 
 //         default:
 //             break;
@@ -23,15 +34,16 @@
 
 // static void on_media_constructed(GstRTSPMediaFactory *factory, GstRTSPMedia *media, gpointer user_data) {
 //     GST_FIXME("on_media_constructed!!!");
-//     GstElement *pipeline = gst_rtsp_media_get_element(media);
 
+//     GstElement *pipeline = gst_rtsp_media_get_element(media);
 //     GstBus *bus = gst_element_get_bus(pipeline);
 //     gst_bus_add_watch(bus, bus_call, user_data);
+//     gst_object_unref(bus);
 // }
 
 int main(int argc, char *argv[]) {
     gst_init(&argc, &argv);
-
+    // void run_rtsp_server() {
     GstRTSPServer *server = gst_rtsp_server_new();
 
     g_object_set(server, "service", "8554", NULL);
@@ -57,3 +69,14 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+
+// int main(int argc, char *argv[]) {
+//     gst_init(&argc, &argv);
+
+//     while (1) {
+//         run_rtsp_server();
+//         GST_FIXME("Restarting RTSP server after error...\n");
+//         // 必要ならsleepやリソース解放処理を追加
+//     }
+//     return 0;
+// }

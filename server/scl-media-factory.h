@@ -16,6 +16,12 @@ struct _SclMediaFactory {
     GstRTSPMediaFactory parent;
 };
 
+#define SCL_MEDIA_FACTORY_SIGNAL_SDP_MISMATCH "sdp-mismatch"
+
+enum { SIGNAL_SDP_MISMATCH, LAST_SIGNAL };
+
+static guint signals[LAST_SIGNAL] = {0};
+
 // GST_RTSP_SERVER_API
 // static GstElement *scl_media_factory_create_element(GstRTSPMediaFactory *factory, const GstRTSPUrl *url);
 
