@@ -1,18 +1,18 @@
 #include <gst/gst.h>
 #include <gst/rtsp-server/rtsp-server.h>
 
-#ifndef __SCL_MEDIA_FACTORY_H__
-#define __SCL_MEDIA_FACTORY_H__
+#ifndef __SCL_MEDIA_VIDEO_FACTORY_H__
+#define __SCL_MEDIA_VIDEO_FACTORY_H__
 
 G_BEGIN_DECLS
 
-#define SCL_TYPE_MEDIA_FACTORY (scl_media_factory_get_type())
+#define SCL_TYPE_MEDIA_VIDEO_FACTORY (scl_media_video_factory_get_type())
 
-G_DECLARE_FINAL_TYPE(SclMediaFactory, scl_media_factory, SCL, MEDIA_FACTORY, GstRTSPMediaFactory)
+G_DECLARE_FINAL_TYPE(SclMediaVideoFactory, scl_media_video_factory, SCL, MEDIA_VIDEO_FACTORY, GstRTSPMediaFactory)
 
-typedef struct _SclMediaFactory SclMediaFactory;
+typedef struct _SclMediaVideoFactory SclMediaVideoFactory;
 
-struct _SclMediaFactory {
+struct _SclMediaVideoFactory {
     GstRTSPMediaFactory parent;
 };
 
@@ -21,4 +21,4 @@ struct _SclMediaFactory {
 
 G_END_DECLS
 
-#endif /* __SCL_MEDIA_FACTORY_H__ */
+#endif /* __SCL_MEDIA_VIDEO_FACTORY_H__ */
